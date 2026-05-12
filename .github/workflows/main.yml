@@ -1,0 +1,13 @@
+name: Build and Test
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Project Structure
+        run: |
+          ls -la
+          test -f backlog.md && echo "Backlog found"
+          test -f CODE_OF_CONDUCT.md && echo "Code of Conduct found"
+          test -d ReportApp && echo "ReportApp folder found"
