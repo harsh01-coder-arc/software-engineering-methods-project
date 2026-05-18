@@ -37,3 +37,44 @@ so that I can identify which capital cities need the most resources and infrastr
 As a user,
 I want to see the top N most populated countries in a specified continent (where N is user-specified),
 so that I can identify the largest economies and population centers in that continent.
+
+# new ( 8 user stories):
+
+As a city planner,
+I want to see all cities in a specific country sorted by population (largest to smallest),
+so that I can identify major urban centers and plan national infrastructure investments.
+
+As a local administrator,
+I want to see all cities in a specific district sorted by population (largest to smallest),
+so that I can understand local urbanization patterns and allocate district resources.
+
+As a business analyst,
+I want to see the top N most populated cities in a specific continent (where N is user-specified),
+so that I can focus market expansion strategies on the largest urban centers.
+
+As a logistics manager,
+I want to see the top N most populated cities in a specific region (where N is user-specified),
+so that I can optimize supply chain distribution networks for high-impact cities.
+
+As a government official,
+I want to see the top N most populated cities in a specific country (where N is user-specified),
+so that I can prioritize national development and resource allocation.
+
+As a district planner,
+I want to see the top N most populated cities in a specific district (where N is user-specified),
+so that I can focus infrastructure development on key urban areas.
+
+As a policy analyst,
+I want to see all capital cities in a specific continent sorted by population (largest to smallest),
+so that I can understand political and administrative centers across the continent.
+
+As a regional administrator,
+I want to see all capital cities in a specific region sorted by population (largest to smallest),
+so that I can identify major administrative hubs for regional coordination.
+
+As a user, I want to see all cities in a specific continent sorted by population (largest to smallest), so that I can understand major 
+urban centers for business expansion opportunities.
+
+As a user, I want to see all cities in a specific region sorted by population (largest to smallest), so that I can plan where supply 
+chains and distribution networks need to be established.
+
