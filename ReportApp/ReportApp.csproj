@@ -1,14 +1,24 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+CREATE TABLE Countries (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    Population BIGINT NOT NULL
+);
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+CREATE TABLE Cities (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    CountryId INT NOT NULL,
+    Name VARCHAR(100) NOT NULL,
+    Population BIGINT NOT NULL,
+    FOREIGN KEY (CountryId) REFERENCES Countries(Id)
+);
 
-  <ItemGroup>
-    <PackageReference Include="MySql.Data" Version="9.7.0" />
-  </ItemGroup>
+INSERT INTO Countries (Name, Population) VALUES
+('India', 1428000000),
+('China', 1412000000),
+('USA', 339000000);
 
-</Project>
+INSERT INTO Cities (CountryId, Name, Population) VALUES
+(1, 'Delhi', 33000000),
+(1, 'Mumbai', 20400000),
+(2, 'Shanghai', 24800000),
+(3, 'New York', 8400000);
