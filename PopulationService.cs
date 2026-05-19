@@ -14,32 +14,45 @@ public class PopulationService
 
     public List<Country> GetTopCountries(int topN)
     {
+        if (topN <= 0)
+        {
+            throw new ArgumentException("topN must be greater than 0");
+        }
+
         var countries = new List<Country>();
 
-        using var connection = new MySqlConnection(_connectionString);
-
-        connection.Open();
-
-        string query = @"
-            SELECT *
-            FROM Countries
-            ORDER BY Population DESC
-            LIMIT @topN";
-
-        using var cmd = new MySqlCommand(query, connection);
-
-        cmd.Parameters.AddWithValue("@topN", topN);
-
-        using var reader = cmd.ExecuteReader();
-
-        while (reader.Read())
+        try
         {
-            countries.Add(new Country
+            using var connection = new MySqlConnection(_connectionString);
+
+            connection.Open();
+
+            string query = @"
+                SELECT Code, Name, Population
+                FROM country
+                ORDER BY Population DESC
+                LIMIT @topN";
+
+            using var cmd = new MySqlCommand(query, connection);
+
+            cmd.Parameters.AddWithValue("@topN", topN);
+
+            using var reader = cmd.ExecuteReader();
+
+            while (reader.Read())
             {
-                Id = reader.GetInt32("Id"),
-                Name = reader.GetString("Name"),
-                Population = reader.GetInt64("Population")
-            });
+                countries.Add(new Country
+                {
+                    Code = reader.GetString("Code"),
+                    Name = reader.GetString("Name"),
+                    Population = reader.GetInt64("Population")
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            throw;
         }
 
         return countries;
@@ -47,33 +60,46 @@ public class PopulationService
 
     public List<City> GetTopCities(int topN)
     {
+        if (topN <= 0)
+        {
+            throw new ArgumentException("topN must be greater than 0");
+        }
+
         var cities = new List<City>();
 
-        using var connection = new MySqlConnection(_connectionString);
-
-        connection.Open();
-
-        string query = @"
-            SELECT *
-            FROM Cities
-            ORDER BY Population DESC
-            LIMIT @topN";
-
-        using var cmd = new MySqlCommand(query, connection);
-
-        cmd.Parameters.AddWithValue("@topN", topN);
-
-        using var reader = cmd.ExecuteReader();
-
-        while (reader.Read())
+        try
         {
-            cities.Add(new City
+            using var connection = new MySqlConnection(_connectionString);
+
+            connection.Open();
+
+            string query = @"
+                SELECT ID, Name, CountryCode, Population
+                FROM city
+                ORDER BY Population DESC
+                LIMIT @topN";
+
+            using var cmd = new MySqlCommand(query, connection);
+
+            cmd.Parameters.AddWithValue("@topN", topN);
+
+            using var reader = cmd.ExecuteReader();
+
+            while (reader.Read())
             {
-                Id = reader.GetInt32("Id"),
-                CountryId = reader.GetInt32("CountryId"),
-                Name = reader.GetString("Name"),
-                Population = reader.GetInt64("Population")
-            });
+                cities.Add(new City
+                {
+                    ID = reader.GetInt32("ID"),
+                    Name = reader.GetString("Name"),
+                    CountryCode = reader.GetString("CountryCode"),
+                    Population = reader.GetInt64("Population")
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            throw;
         }
 
         return cities;
