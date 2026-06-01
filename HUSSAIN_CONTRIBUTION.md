@@ -46,3 +46,5 @@ Each query was checked to make sure it:
 - ✅ Calculates city population totals correctly
 - ✅ Calculates non-city population figures correctly
 - ✅ Produces accurate percentage breakdowns for both groups
+
+
