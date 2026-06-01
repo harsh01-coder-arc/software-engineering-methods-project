@@ -38,7 +38,7 @@ As a user,
 I want to see the top N most populated countries in a specified continent (where N is user-specified),
 so that I can identify the largest economies and population centers in that continent.
 
-# new ( 8 user stories):
+# new ( 10 user stories):
 
 As a city planner,
 I want to see all cities in a specific country sorted by population (largest to smallest),
@@ -77,4 +77,38 @@ urban centers for business expansion opportunities.
 
 As a user, I want to see all cities in a specific region sorted by population (largest to smallest), so that I can plan where supply 
 chains and distribution networks need to be established.
+
+# new ( 8 user stories):
+
+As a linguist,
+I want to see all countries where a specific language is spoken, ranked by number of speakers (largest to smallest),
+so that I can understand the global distribution of that language.
+
+As a data analyst,
+I want to see the top N most populated countries in a specific region (where N is user-specified),
+so that I can identify the largest population centers within that region.
+
+As a policy maker,
+I want to see all countries in a specific region sorted by population (largest to smallest),
+so that I can understand population distribution across that region.
+
+As a urban planner,
+I want to see the population breakdown of a specific country showing people living in cities versus rural areas,
+so that I can understand urbanization levels within that country.
+
+As a regional analyst,
+I want to see the population breakdown of a specific region showing people living in cities versus rural areas,
+so that I can compare urbanization trends across different regions.
+
+As a policy analyst,
+I want to see the top N most populated capital cities in a specific continent (where N is user-specified),
+so that I can identify the most significant political and administrative centers on that continent.
+
+As a data analyst,
+I want to see all capital cities worldwide sorted by population (largest to smallest),
+so that I can identify the most populated capitals and understand political center demographics globally.
+
+As a researcher,
+I want to see how many people speak Chinese, English, Hindi, Spanish, and Arabic as a percentage of world population,
+so that I can understand the global reach and dominance of major world languages.
 
