@@ -1,13 +1,34 @@
 name: Build and Test
-on: [push]
+
+on: [push, pull_request]
+
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Verify Project Structure
-        run: |
-          ls -la
-          test -f backlog.md && echo "Backlog found"
-          test -f CODE_OF_CONDUCT.md && echo "Code of Conduct found"
-          test -d ReportApp && echo "ReportApp folder found"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build Docker Compose services
+        run: docker compose -f ReportApp/docker-compose.yml build
+
+      - name: Start Docker Compose services
+        run: docker compose -f ReportApp/docker-compose.yml up -d
+
+      - name: Wait for MySQL to be ready
+        run: sleep 30
+
+      - name: Check running containers
+        run: docker compose -f ReportApp/docker-compose.yml ps
+
+      - name: View application logs
+        run: docker compose -f ReportApp/docker-compose.yml logs app
+
+      - name: Stop Docker Compose services
+        run: docker compose -f ReportApp/docker-compose.yml down
