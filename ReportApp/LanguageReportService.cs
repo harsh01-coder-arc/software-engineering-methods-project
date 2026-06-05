@@ -1,168 +1,246 @@
-using System.Collections.Generic;
 using MySql.Data.MySqlClient;
+
+namespace ReportApp.Services;
 
 public class LanguageReportService
 {
     private readonly string _connectionString;
 
-    // Store the database connection string when the service is created
     public LanguageReportService(string connectionString)
     {
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new ArgumentException("A database connection string is required.");
+        }
+
         _connectionString = connectionString;
     }
 
-    // Runs any SQL query and returns the results as a list of rows
-    public List<Dictionary<string, object>> ExecuteReport(string query)
+    public List<Dictionary<string, object>> RunQuery(string query, Dictionary<string, object>? parameters = null)
     {
-        var results = new List<Dictionary<string, object>>();
-
-        using var connection = new MySqlConnection(_connectionString);
-        connection.Open();
-
-        using var command = new MySqlCommand(query, connection);
-        using var reader = command.ExecuteReader();
-
-        // Read each row and store column name + value as a dictionary
-        while (reader.Read())
+        if (string.IsNullOrWhiteSpace(query))
         {
-            var row = new Dictionary<string, object>();
-
-            for (int i = 0; i < reader.FieldCount; i++)
-            {
-                row[reader.GetName(i)] = reader.GetValue(i);
-            }
-
-            results.Add(row);
+            throw new ArgumentException("SQL query cannot be empty.");
         }
 
-        return results;
+        var rows = new List<Dictionary<string, object>>();
+
+        try
+        {
+            using var connection = new MySqlConnection(_connectionString);
+            connection.Open();
+
+            using var command = new MySqlCommand(query, connection);
+
+            if (parameters != null)
+            {
+                foreach (var item in parameters)
+                {
+                    command.Parameters.AddWithValue(item.Key, item.Value);
+                }
+            }
+
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var row = new Dictionary<string, object>();
+
+                for (var i = 0; i < reader.FieldCount; i++)
+                {
+                    row[reader.GetName(i)] = reader.GetValue(i);
+                }
+
+                rows.Add(row);
+            }
+        }
+        catch (MySqlException ex)
+        {
+            Console.WriteLine("Database error while running language report: " + ex.Message);
+            throw;
+        }
+
+        return rows;
     }
 
-    // Report 21: Spanish-speaking countries sorted by speaker count
+    private static void CheckTextInput(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException($"{fieldName} cannot be empty.");
+        }
+    }
+
+    private static void CheckLimit(int limit)
+    {
+        if (limit <= 0)
+        {
+            throw new ArgumentException("Limit must be greater than zero.");
+        }
+    }
+
     public string GetReport21SpanishCountries()
     {
         return @"
 SELECT
-    country.Name AS Country,
-    country.Continent,
-    country.Region,
-    countrylanguage.Language,
-    countrylanguage.Percentage,
-    ROUND(country.Population * countrylanguage.Percentage / 100) AS Speakers
-FROM country
-INNER JOIN countrylanguage ON country.Code = countrylanguage.CountryCode
-WHERE countrylanguage.Language = 'Spanish'
+    c.Name AS Country,
+    c.Continent,
+    c.Region,
+    cl.Language,
+    cl.Percentage,
+    ROUND(c.Population * cl.Percentage / 100) AS Speakers
+FROM country c
+JOIN countrylanguage cl ON c.Code = cl.CountryCode
+WHERE cl.Language = 'Spanish'
 ORDER BY Speakers DESC;";
     }
 
-    // Report 22: Total worldwide speakers of 5 major languages
     public string GetReport22MajorLanguageSpeakers()
     {
         return @"
 SELECT
-    countrylanguage.Language,
-    ROUND(SUM(country.Population * countrylanguage.Percentage / 100)) AS TotalSpeakers
-FROM country
-INNER JOIN countrylanguage ON country.Code = countrylanguage.CountryCode
-WHERE countrylanguage.Language IN ('Chinese', 'English', 'Hindi', 'Spanish', 'Arabic')
-GROUP BY countrylanguage.Language
+    cl.Language,
+    ROUND(SUM(c.Population * cl.Percentage / 100)) AS TotalSpeakers
+FROM country c
+JOIN countrylanguage cl ON c.Code = cl.CountryCode
+WHERE cl.Language IN ('Chinese', 'English', 'Hindi', 'Spanish', 'Arabic')
+GROUP BY cl.Language
 ORDER BY TotalSpeakers DESC;";
     }
 
-    // Report 23: What percentage of the world speaks each major language
     public string GetReport23MajorLanguagePercentages()
     {
         return @"
 SELECT
-    countrylanguage.Language,
-    ROUND(SUM(country.Population * countrylanguage.Percentage / 100)) AS TotalSpeakers,
+    cl.Language,
+    ROUND(SUM(c.Population * cl.Percentage / 100)) AS TotalSpeakers,
     ROUND(
-        SUM(country.Population * countrylanguage.Percentage / 100) * 100.0 /
+        SUM(c.Population * cl.Percentage / 100) * 100.0 /
         (SELECT SUM(Population) FROM country),
         2
     ) AS WorldPopulationPercentage
-FROM country
-INNER JOIN countrylanguage ON country.Code = countrylanguage.CountryCode
-WHERE countrylanguage.Language IN ('Chinese', 'English', 'Hindi', 'Spanish', 'Arabic')
-GROUP BY countrylanguage.Language
+FROM country c
+JOIN countrylanguage cl ON c.Code = cl.CountryCode
+WHERE cl.Language IN ('Chinese', 'English', 'Hindi', 'Spanish', 'Arabic')
+GROUP BY cl.Language
 ORDER BY WorldPopulationPercentage DESC;";
     }
 
-    // Report 24: Countries where a given language is spoken, sorted by speaker count
     public string GetReport24CountriesByLanguage(string language)
     {
-        return $@"
+        CheckTextInput(language, "Language");
+
+        return @"
 SELECT
-    country.Name AS Country,
-    country.Continent,
-    country.Region,
-    countrylanguage.Language,
-    countrylanguage.Percentage,
-    ROUND(country.Population * countrylanguage.Percentage / 100) AS Speakers
-FROM country
-INNER JOIN countrylanguage ON country.Code = countrylanguage.CountryCode
-WHERE countrylanguage.Language = '{language}'
+    c.Name AS Country,
+    c.Continent,
+    c.Region,
+    cl.Language,
+    cl.Percentage,
+    ROUND(c.Population * cl.Percentage / 100) AS Speakers
+FROM country c
+JOIN countrylanguage cl ON c.Code = cl.CountryCode
+WHERE cl.Language = @language
 ORDER BY Speakers DESC;";
     }
 
-    // Report 25: Top N countries by speaker count for a given language
-    public string GetReport25TopNCountriesByLanguage(string language, int limit)
+    public string GetReport25TopCountriesByLanguage(string language, int limit)
     {
-        return $@"
+        CheckTextInput(language, "Language");
+        CheckLimit(limit);
+
+        return @"
 SELECT
-    country.Name AS Country,
-    country.Continent,
-    country.Region,
-    countrylanguage.Language,
-    countrylanguage.Percentage,
-    ROUND(country.Population * countrylanguage.Percentage / 100) AS Speakers
-FROM country
-INNER JOIN countrylanguage ON country.Code = countrylanguage.CountryCode
-WHERE countrylanguage.Language = '{language}'
+    c.Name AS Country,
+    c.Continent,
+    c.Region,
+    cl.Language,
+    cl.Percentage,
+    ROUND(c.Population * cl.Percentage / 100) AS Speakers
+FROM country c
+JOIN countrylanguage cl ON c.Code = cl.CountryCode
+WHERE cl.Language = @language
 ORDER BY Speakers DESC
-LIMIT {limit};";
+LIMIT @limit;";
     }
 
-    // Report 26: Officially recognized languages ranked by total speakers
     public string GetReport26OfficialLanguages()
     {
         return @"
 SELECT
-    countrylanguage.Language,
-    ROUND(SUM(country.Population * countrylanguage.Percentage / 100)) AS TotalSpeakers
-FROM country
-INNER JOIN countrylanguage ON country.Code = countrylanguage.CountryCode
-WHERE countrylanguage.IsOfficial = 'T'
-GROUP BY countrylanguage.Language
+    cl.Language,
+    ROUND(SUM(c.Population * cl.Percentage / 100)) AS TotalSpeakers
+FROM country c
+JOIN countrylanguage cl ON c.Code = cl.CountryCode
+WHERE cl.IsOfficial = 'T'
+GROUP BY cl.Language
 ORDER BY TotalSpeakers DESC;";
     }
 
-    // Report 27: Non-official languages ranked by total speakers
-    public string GetReport27NonOfficialLanguages()
+    public string GetReport27UnofficialLanguages()
     {
         return @"
 SELECT
-    countrylanguage.Language,
-    ROUND(SUM(country.Population * countrylanguage.Percentage / 100)) AS TotalSpeakers
-FROM country
-INNER JOIN countrylanguage ON country.Code = countrylanguage.CountryCode
-WHERE countrylanguage.IsOfficial = 'F'
-GROUP BY countrylanguage.Language
+    cl.Language,
+    ROUND(SUM(c.Population * cl.Percentage / 100)) AS TotalSpeakers
+FROM country c
+JOIN countrylanguage cl ON c.Code = cl.CountryCode
+WHERE cl.IsOfficial = 'F'
+GROUP BY cl.Language
 ORDER BY TotalSpeakers DESC;";
     }
 
-    // Report 28: Languages spoken in a given continent, ranked by total speakers
     public string GetReport28LanguagesByContinent(string continent)
     {
-        return $@"
+        CheckTextInput(continent, "Continent");
+
+        return @"
 SELECT
-    countrylanguage.Language,
-    country.Continent,
-    ROUND(SUM(country.Population * countrylanguage.Percentage / 100)) AS TotalSpeakers
-FROM country
-INNER JOIN countrylanguage ON country.Code = countrylanguage.CountryCode
-WHERE country.Continent = '{continent}'
-GROUP BY countrylanguage.Language, country.Continent
+    cl.Language,
+    c.Continent,
+    ROUND(SUM(c.Population * cl.Percentage / 100)) AS TotalSpeakers
+FROM country c
+JOIN countrylanguage cl ON c.Code = cl.CountryCode
+WHERE c.Continent = @continent
+GROUP BY cl.Language, c.Continent
 ORDER BY TotalSpeakers DESC;";
+    }
+
+    public List<Dictionary<string, object>> RunReport24(string language)
+    {
+        CheckTextInput(language, "Language");
+
+        return RunQuery(
+            GetReport24CountriesByLanguage(language),
+            new Dictionary<string, object>
+            {
+                { "@language", language }
+            });
+    }
+
+    public List<Dictionary<string, object>> RunReport25(string language, int limit)
+    {
+        CheckTextInput(language, "Language");
+        CheckLimit(limit);
+
+        return RunQuery(
+            GetReport25TopCountriesByLanguage(language, limit),
+            new Dictionary<string, object>
+            {
+                { "@language", language },
+                { "@limit", limit }
+            });
+    }
+
+    public List<Dictionary<string, object>> RunReport28(string continent)
+    {
+        CheckTextInput(continent, "Continent");
+
+        return RunQuery(
+            GetReport28LanguagesByContinent(continent),
+            new Dictionary<string, object>
+            {
+                { "@continent", continent }
+            });
     }
 }
