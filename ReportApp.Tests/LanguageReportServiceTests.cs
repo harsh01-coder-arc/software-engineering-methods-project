@@ -1,80 +1,104 @@
+using ReportApp.Services;
 using Xunit;
+
+namespace ReportApp.Tests;
 
 public class LanguageReportServiceTests
 {
-    // Connect to the local world database for all tests
     private readonly LanguageReportService _service =
         new LanguageReportService("Server=localhost;Database=world;User=root;Password=root;");
 
     [Fact]
-    // Check that Report 21 filters for Spanish and sorts by speakers
-    public void Report21_Should_Filter_Spanish()
+    public void Report21_Should_Show_Spanish_Countries()
     {
-        var query = _service.GetReport21SpanishCountries();
-        Assert.Contains("Spanish", query);
-        Assert.Contains("ORDER BY Speakers DESC", query);
+        var sql = _service.GetReport21SpanishCountries();
+
+        Assert.Contains("Spanish", sql);
+        Assert.Contains("ORDER BY Speakers DESC", sql);
     }
 
     [Fact]
-    // Check that Report 22 includes all 5 major languages
-    public void Report22_Should_Include_Major_Languages()
+    public void Report22_Should_Use_Five_Main_Languages()
     {
-        var query = _service.GetReport22MajorLanguageSpeakers();
-        Assert.Contains("Chinese", query);
-        Assert.Contains("English", query);
-        Assert.Contains("Hindi", query);
-        Assert.Contains("Spanish", query);
-        Assert.Contains("Arabic", query);
+        var sql = _service.GetReport22MajorLanguageSpeakers();
+
+        Assert.Contains("Chinese", sql);
+        Assert.Contains("English", sql);
+        Assert.Contains("Hindi", sql);
+        Assert.Contains("Spanish", sql);
+        Assert.Contains("Arabic", sql);
     }
 
     [Fact]
-    // Check that Report 23 calculates world population percentage using a subquery
-    public void Report23_Should_Calculate_World_Percentage()
+    public void Report23_Should_Calculate_Global_Percentage()
     {
-        var query = _service.GetReport23MajorLanguagePercentages();
-        Assert.Contains("WorldPopulationPercentage", query);
-        Assert.Contains("SELECT SUM(Population) FROM country", query);
+        var sql = _service.GetReport23MajorLanguagePercentages();
+
+        Assert.Contains("WorldPopulationPercentage", sql);
+        Assert.Contains("SELECT SUM(Population) FROM country", sql);
     }
 
     [Fact]
-    // Check that Report 24 filters by the given language and sorts by speakers
-    public void Report24_Should_Filter_By_Selected_Language()
+    public void Report24_Should_Use_Language_Parameter()
     {
-        var query = _service.GetReport24CountriesByLanguage("English");
-        Assert.Contains("English", query);
-        Assert.Contains("ORDER BY Speakers DESC", query);
+        var sql = _service.GetReport24CountriesByLanguage("English");
+
+        Assert.Contains("@language", sql);
+        Assert.DoesNotContain("'English'", sql);
     }
 
     [Fact]
-    // Check that Report 25 applies the row limit correctly
-    public void Report25_Should_Use_Limit()
+    public void Report24_Should_Not_Accept_Empty_Language()
     {
-        var query = _service.GetReport25TopNCountriesByLanguage("English", 10);
-        Assert.Contains("LIMIT 10", query);
+        Assert.Throws<ArgumentException>(() =>
+            _service.GetReport24CountriesByLanguage(""));
     }
 
     [Fact]
-    // Check that Report 26 only includes officially recognized languages
+    public void Report25_Should_Use_Language_And_Limit_Parameters()
+    {
+        var sql = _service.GetReport25TopCountriesByLanguage("English", 10);
+
+        Assert.Contains("@language", sql);
+        Assert.Contains("LIMIT @limit", sql);
+    }
+
+    [Fact]
+    public void Report25_Should_Not_Accept_Zero_Limit()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            _service.GetReport25TopCountriesByLanguage("English", 0));
+    }
+
+    [Fact]
     public void Report26_Should_Filter_Official_Languages()
     {
-        var query = _service.GetReport26OfficialLanguages();
-        Assert.Contains("IsOfficial = 'T'", query);
+        var sql = _service.GetReport26OfficialLanguages();
+
+        Assert.Contains("IsOfficial = 'T'", sql);
     }
 
     [Fact]
-    // Check that Report 27 only includes non-official languages
-    public void Report27_Should_Filter_NonOfficial_Languages()
+    public void Report27_Should_Filter_Unofficial_Languages()
     {
-        var query = _service.GetReport27NonOfficialLanguages();
-        Assert.Contains("IsOfficial = 'F'", query);
+        var sql = _service.GetReport27UnofficialLanguages();
+
+        Assert.Contains("IsOfficial = 'F'", sql);
     }
 
     [Fact]
-    // Check that Report 28 filters by the given continent and groups correctly
-    public void Report28_Should_Filter_By_Continent()
+    public void Report28_Should_Use_Continent_Parameter()
     {
-        var query = _service.GetReport28LanguagesByContinent("Asia");
-        Assert.Contains("Asia", query);
-        Assert.Contains("GROUP BY countrylanguage.Language, country.Continent", query);
+        var sql = _service.GetReport28LanguagesByContinent("Asia");
+
+        Assert.Contains("@continent", sql);
+        Assert.Contains("GROUP BY cl.Language, c.Continent", sql);
+    }
+
+    [Fact]
+    public void Report28_Should_Not_Accept_Empty_Continent()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            _service.GetReport28LanguagesByContinent(""));
     }
 }
